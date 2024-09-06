@@ -19,6 +19,7 @@ type PromptInfo struct {
 	Status   string
 	Output   map[string]interface{}
 	ID       int
+	PromptID string // 新增字段
 }
 
 type ComfyUIMock struct {
@@ -67,6 +68,7 @@ func (m *ComfyUIMock) handlePrompt(c *gin.Context) {
 		ClientID: request.ClientID,
 		Status:   "pending",
 		ID:       m.queueID,
+		PromptID: promptID, // 设置 PromptID
 	}
 	m.prompts[promptID] = promptInfo
 	m.mu.Unlock()
@@ -119,7 +121,7 @@ func (m *ComfyUIMock) handleQueue(c *gin.Context) {
 	if m.runningTask != nil {
 		queueRunning = append(queueRunning, []interface{}{
 			m.runningTask.ID,
-			m.runningTask.ClientID,
+			m.runningTask.PromptID,
 			m.runningTask.Prompt,
 			[]string{"9"},
 		})
@@ -129,7 +131,7 @@ func (m *ComfyUIMock) handleQueue(c *gin.Context) {
 		if prompt.Status == "pending" {
 			queuePending = append(queuePending, []interface{}{
 				prompt.ID,
-				prompt.ClientID,
+				prompt.PromptID,
 				prompt.Prompt,
 				[]string{"9"},
 			})
@@ -176,10 +178,10 @@ func (m *ComfyUIMock) processPrompt(prompt *PromptInfo) {
 	defer m.mu.Unlock()
 
 	prompt.Status = "completed"
-	prompt.Output = generateMockOutput(prompt.ClientID)
+	prompt.Output = generateMockOutput(prompt.PromptID)
 
 	// 复制图片文件并重命名
-	err := copyAndRenameImage(prompt.ClientID)
+	err := copyAndRenameImage(prompt.PromptID)
 	if err != nil {
 		fmt.Printf("复制和重命名图片时出错: %v\n", err)
 	}
@@ -190,7 +192,7 @@ func generateMockOutput(promptID string) map[string]interface{} {
 		"9": map[string]interface{}{
 			"images": []map[string]interface{}{
 				{
-					"filename":  fmt.Sprintf("output_%s.png", promptID[:8]),
+					"filename":  fmt.Sprintf("%s.png", promptID[:8]),
 					"subfolder": "",
 					"type":      "output",
 				},
