@@ -45,7 +45,7 @@ func main() {
 	r.GET("/history/:prompt_id", mock.handleHistory)
 	r.GET("/queue", mock.handleQueue)
 
-	r.Run(":8288")
+	r.Run(":8188")
 }
 
 func (m *ComfyUIMock) handlePrompt(c *gin.Context) {
